@@ -288,6 +288,60 @@ header {
 .progress-detail span strong { color: var(--text); font-weight: 500; margin-left: 4px; }
 
 .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+
+.sort-wrap {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 0 0 12px;
+  min-width: 200px;
+}
+.sort-wrap label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.sort-select {
+  flex: 1;
+  padding: 11px 12px 11px 4px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%238a8983' stroke-width='1.5' fill='none'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+.sort-select:focus { outline: none; }
+
+/* Stock load info */
+.stock-info-bar {
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap;
+  background: var(--bg-elev);
+  border: 1px solid var(--line-soft);
+  border-left: 2px solid var(--accent);
+  border-radius: 3px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.stock-info-bar strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.stock-info-sep { color: var(--line); }
 .search { flex: 1; min-width: 240px; position: relative; }
 .search input {
   width: 100%;
@@ -592,6 +646,51 @@ header {
 
 /* Bulk modal */
 .bulk-modal { max-width: 640px; }
+
+/* Users list */
+.user-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  align-items: center;
+}
+.user-row:last-child { border-bottom: none; }
+.user-row.inactive { opacity: 0.5; }
+.user-info { min-width: 0; }
+.user-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+.user-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.user-actions { display: flex; gap: 4px; }
+.user-actions .btn-mini {
+  padding: 6px 9px;
+  background: var(--bg-elev2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  cursor: pointer;
+}
+.user-actions .btn-mini:hover { color: var(--text); border-color: var(--text-dim); }
+.user-actions .btn-mini.danger:hover { color: var(--red); border-color: var(--red); }
+
+@media (max-width: 480px) {
+  .user-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  #newUserGrid { grid-template-columns: 1fr !important; }
+}
 .bulk-step { padding: 18px 22px 20px; }
 .bulk-step h3 {
   font-size: 13px; font-weight: 700;
@@ -809,6 +908,7 @@ header {
       <span class="user-pill" id="userPill" title="Cambiar usuario">— —</span>
       <span class="admin-badge" id="adminBadge" style="display:none;" title="Modo administrador">ADMIN</span>
       <button class="btn btn-ghost" id="btnRefresh" title="Sincronizar con el Sheet">↻ Sync</button>
+      <button class="btn btn-ghost" id="btnUsers" title="Gestionar usuarios" style="display:none;">👥 Usuarios</button>
       <button class="btn btn-ghost" id="btnBulkAudit" title="Cargar varios VINs de una vez">⚡ Masivo</button>
       <button class="btn btn-ghost" id="btnLoadExcel" title="Subir reporte Excel" style="display:none;">+ Excel</button>
       <button class="btn btn-primary" id="btnExport">Exportar</button>
@@ -833,10 +933,17 @@ header {
       <label>URL del Apps Script Web App</label>
       <input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
     </div>
-    <label>Tu nombre <span style="color:var(--text-faint); text-transform:none; letter-spacing:0; font-family:'Inter',sans-serif;">— queda registrado en cada cambio</span></label>
-    <input type="text" id="userName" placeholder="Ej: Gonza Castillo" autocomplete="off">
-    <label>Contraseña admin <span style="color:var(--text-faint); text-transform:none; letter-spacing:0; font-family:'Inter',sans-serif;">— solo si vas a cargar el reporte base. Dejar vacío para hacer seguimiento.</span></label>
-    <input type="password" id="adminPwd" placeholder="(opcional)" autocomplete="off">
+    <label>Tu nombre <span style="color:var(--text-faint); text-transform:none; letter-spacing:0; font-family:'Inter',sans-serif;">— el que te asignó el admin</span></label>
+    <input type="text" id="userName" placeholder="Ej: Felipe" autocomplete="username">
+    <label>Tu clave personal</label>
+    <input type="password" id="userPwd" placeholder="La que te dio el admin" autocomplete="current-password">
+    <div id="adminToggle" style="margin-top:14px;">
+      <a class="help-link" id="lnkAdminMode" style="font-size:11px;">Soy admin (cargar reporte / gestionar usuarios) ↓</a>
+    </div>
+    <div id="adminPwdField" style="display:none;">
+      <label>Contraseña admin</label>
+      <input type="password" id="adminPwd" placeholder="Solo si sos admin" autocomplete="off">
+    </div>
     <div class="setup-actions">
       <button class="btn btn-primary" id="btnConnect">Conectar</button>
       <a class="help-link" id="lnkHelp" style="display:none;">¿Cómo configurar el Sheet?</a>
@@ -898,14 +1005,32 @@ header {
       <span>Relevadas:<strong id="detAudited">0</strong></span>
       <span>Asignadas:<strong id="detAssigned">0</strong></span>
       <span>Sucursales:<strong id="detSucursales">0</strong></span>
-      <span>Última sync:<strong id="detSync">—</strong></span>
     </div>
+  </div>
+
+  <div class="stock-info-bar mono" id="stockInfoBar" style="display:none;">
+    <span>Stock cargado: <strong id="stockLoadDate">—</strong></span>
+    <span class="stock-info-sep">·</span>
+    <span><strong id="stockTotalUnits">0</strong> unidades</span>
+    <span class="stock-info-sep">·</span>
+    <span>Última sincronización: <strong id="stockSyncTime">—</strong></span>
   </div>
 
   <div class="controls">
     <div class="search">
       <span class="search-icon mono">⌕</span>
       <input type="text" id="search" placeholder="Buscar por chasis, modelo, color, cliente o preventa…" autocomplete="off">
+    </div>
+    <div class="sort-wrap">
+      <label class="mono">Orden</label>
+      <select class="sort-select" id="sortSelect">
+        <option value="original">Original (Excel)</option>
+        <option value="age_desc">Antigüedad: + viejos primero</option>
+        <option value="age_asc">Antigüedad: + nuevos primero</option>
+        <option value="modelo">Modelo (A-Z)</option>
+        <option value="sucursal">Sucursal asignada</option>
+        <option value="status">Estado (pendientes primero)</option>
+      </select>
     </div>
   </div>
 
@@ -1006,6 +1131,35 @@ header {
   </div>
 </div>
 
+<!-- MODAL USUARIOS -->
+<div class="modal-backdrop" id="usersModal">
+  <div class="modal bulk-modal">
+    <div class="modal-head">
+      <div class="modal-handle"></div>
+      <div class="modal-title">👥 Gestión de usuarios</div>
+      <div class="modal-sub mono">Solo admin · auditores con acceso al sistema</div>
+    </div>
+    <div class="bulk-step">
+      <h3>Crear nuevo auditor</h3>
+      <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:8px; margin-bottom:14px;" id="newUserGrid">
+        <input type="text" id="newUserName" class="notes-input" placeholder="Nombre" style="min-height:40px;">
+        <input type="text" id="newUserPwd" class="notes-input" placeholder="Clave inicial" style="min-height:40px;">
+        <button class="btn btn-primary" id="btnCreateUser" style="white-space:nowrap;">+ Crear</button>
+      </div>
+
+      <h3 style="margin-top:18px;">Auditores activos</h3>
+      <div class="bulk-list-wrap" id="usersList" style="max-height:50vh;">
+        <div class="empty-state" style="padding:30px 20px;">Cargando…</div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnRefreshUsers">↻ Refrescar</button>
+        <button class="btn btn-primary" id="btnCloseUsers">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CARGA MASIVA -->
 <div class="modal-backdrop" id="bulkModal">
   <div class="modal bulk-modal">
@@ -1099,12 +1253,14 @@ const SUCURSALES = [
 
 const STORAGE_KEY = 'auditoria_stock_config';
 
-let CONFIG = { apiUrl: '', userName: '', adminPwd: '' };
+let CONFIG = { apiUrl: '', userName: '', userPwd: '', adminPwd: '' };
 let isAdmin = false;
 let units = [];
 let currentFilter = 'all';
 let currentSearch = '';
+let currentSort = 'original';
 let editingIdx = null;
+let stockLoadDate = null; // Fecha de la última carga del Excel
 
 // ============ STORAGE (en memoria + localStorage si está disponible) ============
 function loadConfig() {
@@ -1227,7 +1383,7 @@ function renderFilters() {
 
 function getFilteredUnits() {
   const s = currentSearch.toLowerCase().trim();
-  return units.filter((u, idx) => {
+  const filtered = units.filter((u, idx) => {
     u._idx = idx;
     if (currentFilter === 'pending' && u.status !== 'pending') return false;
     if (currentFilter === 'found' && u.status !== 'found') return false;
@@ -1240,6 +1396,32 @@ function getFilteredUnits() {
     }
     return true;
   });
+  return sortUnits(filtered);
+}
+
+function sortUnits(arr) {
+  // Orden de prioridad para "status": pending=0, missing=1, found=2 (pendientes arriba)
+  const statusRank = { pending: 0, missing: 1, found: 2 };
+  const cmp = {
+    'original': (a, b) => a._idx - b._idx,
+    'age_desc': (a, b) => (b.antiguedad || 0) - (a.antiguedad || 0),
+    'age_asc':  (a, b) => (a.antiguedad || 0) - (b.antiguedad || 0),
+    'modelo':   (a, b) => (a.modelo || '').localeCompare(b.modelo || '', 'es') || a._idx - b._idx,
+    'sucursal': (a, b) => {
+      // Sin asignar al final, después por sucursal alfabético
+      const sa = a.ubic_real || 'zzz';
+      const sb = b.ubic_real || 'zzz';
+      return sa.localeCompare(sb, 'es') || a._idx - b._idx;
+    },
+    'status':   (a, b) => {
+      const ra = statusRank[a.status || 'pending'] ?? 0;
+      const rb = statusRank[b.status || 'pending'] ?? 0;
+      return ra - rb || a._idx - b._idx;
+    }
+  };
+  const fn = cmp[currentSort] || cmp['original'];
+  // Crear copia para no mutar el array original
+  return [...arr].sort(fn);
 }
 
 function renderList() {
@@ -1503,13 +1685,44 @@ async function syncFromSheet() {
     $('btnRefresh').textContent = '↻ Sync…';
     const res = await api('getAll');
     units = res.units || [];
-    $('detSync').textContent = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+
+    // Extraer fecha de carga (todas las unidades tienen la misma)
+    if (units.length > 0 && units[0].fecha_carga) {
+      stockLoadDate = units[0].fecha_carga;
+    }
+
+    updateStockInfoBar();
     renderAll();
     return units.length;
   } finally {
     $('btnRefresh').disabled = false;
     $('btnRefresh').textContent = '↻ Sync';
   }
+}
+
+function updateStockInfoBar() {
+  const bar = $('stockInfoBar');
+  if (units.length === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = '';
+  // Fecha de carga
+  if (stockLoadDate) {
+    const d = new Date(stockLoadDate);
+    if (!isNaN(d.getTime())) {
+      $('stockLoadDate').textContent = d.toLocaleString('es-AR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    } else {
+      $('stockLoadDate').textContent = stockLoadDate;
+    }
+  } else {
+    $('stockLoadDate').textContent = '—';
+  }
+  $('stockTotalUnits').textContent = units.length;
+  $('stockSyncTime').textContent = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
 }
 
 // ============ EXPORTAR ============
@@ -1576,10 +1789,10 @@ function statusLabel(s) {
 
 // Conectar al Sheet
 $('btnConnect').addEventListener('click', async () => {
-  // Usar URL hardcodeada si existe, sino la del input
   const url = SHEET_API_URL || $('apiUrl').value.trim();
   const name = $('userName').value.trim();
-  const pwd = $('adminPwd').value;
+  const userPwd = $('userPwd').value;
+  const adminPwd = $('adminPwd').value;
   if (!url) { alert('Falta configurar la URL del Apps Script.'); return; }
   if (!name) { alert('Por favor poné tu nombre.'); return; }
   if (!url.includes('script.google.com')) { alert('La URL no parece ser de Apps Script.'); return; }
@@ -1589,30 +1802,56 @@ $('btnConnect').addEventListener('click', async () => {
 
   CONFIG.apiUrl = url;
   CONFIG.userName = name;
-  CONFIG.adminPwd = pwd;
+  CONFIG.userPwd = userPwd;
+  CONFIG.adminPwd = adminPwd;
 
   try {
-    // Test ping
     await api('init');
 
-    // Validar password admin si se ingresó
     isAdmin = false;
-    if (pwd) {
+    if (adminPwd) {
       try {
-        const check = await api('checkAdmin', { adminPwd: pwd });
+        const check = await api('checkAdmin', { adminPwd });
         if (check.isAdmin) {
           isAdmin = true;
         } else {
-          // Password incorrecta — no avanzamos
           $('btnConnect').disabled = false;
           $('btnConnect').textContent = 'Conectar';
-          alert('La contraseña de admin es incorrecta.\n\nDejala vacía si solo querés hacer seguimiento.');
+          alert('La contraseña de admin es incorrecta.');
           return;
         }
       } catch (err) {
         $('btnConnect').disabled = false;
         $('btnConnect').textContent = 'Conectar';
-        alert('No pude validar la contraseña: ' + err.message);
+        alert('No pude validar la contraseña admin: ' + err.message);
+        return;
+      }
+    }
+
+    // Si NO es admin, validar usuario+clave
+    if (!isAdmin) {
+      if (!userPwd) {
+        $('btnConnect').disabled = false;
+        $('btnConnect').textContent = 'Conectar';
+        alert('Falta tu clave personal.\n\nPedile el alta a Gonza si no la tenés todavía.');
+        return;
+      }
+      try {
+        const login = await api('loginUser', { nombre: name, userPwd });
+        if (!login.ok) {
+          $('btnConnect').disabled = false;
+          $('btnConnect').textContent = 'Conectar';
+          alert('Nombre o clave incorrectos.\n\nVerificá que coincidan exacto con los que te dio Gonza.');
+          return;
+        }
+        if (login.user && login.user.nombre) {
+          CONFIG.userName = login.user.nombre;
+          $('userName').value = CONFIG.userName;
+        }
+      } catch (err) {
+        $('btnConnect').disabled = false;
+        $('btnConnect').textContent = 'Conectar';
+        alert('Error al validar el usuario: ' + err.message);
         return;
       }
     }
@@ -1620,20 +1859,16 @@ $('btnConnect').addEventListener('click', async () => {
     saveConfig();
     applyAdminMode();
 
-    // Cargar datos existentes del Sheet
     const count = await syncFromSheet();
-    $('userPill').textContent = name;
+    $('userPill').textContent = CONFIG.userName;
     $('setupCard').style.display = 'none';
 
     if (count === 0) {
-      // No hay datos
       if (isAdmin) {
-        // Admin → mostrar carga de Excel
         $('loadCard').style.display = '';
         $('loadTitle').textContent = 'Cargar reporte de stock';
         $('loadHint').textContent = 'El Sheet está vacío. Subí el Excel del sistema para arrancar el seguimiento.';
       } else {
-        // Auditor sin admin → mostrar mensaje claro
         showWorkspace();
         showToast('El Sheet está vacío. El admin debe cargar el reporte primero.', 'error');
       }
@@ -1642,7 +1877,7 @@ $('btnConnect').addEventListener('click', async () => {
       showToast(`${count} unidades cargadas desde el Sheet`);
     }
   } catch (err) {
-    alert('No pude conectar: ' + err.message + '\n\nRevisá:\n• Que la URL sea de "Aplicación web" (termina en /exec)\n• Que el acceso sea "Cualquier usuario"\n• Que hayas autorizado los permisos en Apps Script');
+    alert('No pude conectar: ' + err.message);
   } finally {
     $('btnConnect').disabled = false;
     $('btnConnect').textContent = 'Conectar';
@@ -1653,9 +1888,11 @@ function applyAdminMode() {
   if (isAdmin) {
     $('adminBadge').style.display = '';
     $('btnLoadExcel').style.display = '';
+    $('btnUsers').style.display = '';
   } else {
     $('adminBadge').style.display = 'none';
     $('btnLoadExcel').style.display = 'none';
+    $('btnUsers').style.display = 'none';
   }
 }
 
@@ -1737,6 +1974,10 @@ $('search').addEventListener('input', e => {
   currentSearch = e.target.value;
   renderList();
 });
+$('sortSelect').addEventListener('change', e => {
+  currentSort = e.target.value;
+  renderList();
+});
 $('filterPills').addEventListener('click', e => {
   const p = e.target.closest('.pill');
   if (!p) return;
@@ -1795,6 +2036,7 @@ document.addEventListener('keydown', e => {
     closeModal();
     $('helpModal').classList.remove('show');
     closeBulkModal();
+    closeUsersModal();
   }
 });
 
@@ -1858,14 +2100,23 @@ function processBulkInput() {
   // Buscar cada VIN en units (matching case-insensitive)
   const defaultSucursal = $('bulkDefaultSucursal').value;
   bulkProcessedItems = unique.map(vin => {
-    const found = units.find(u => u.chasis && u.chasis.toUpperCase() === vin);
+    // Primero intenta match exacto, si no encuentra busca si el VIN aparece al FINAL del chasis largo
+    // Esto permite pegar los últimos 8-10 dígitos del vidrio y encontrar el chasis completo del sistema
+    const found = units.find(u => {
+      if (!u.chasis) return false;
+      const chasis = u.chasis.toUpperCase();
+      if (chasis === vin) return true;                    // match exacto
+      if (vin.length >= 5 && chasis.endsWith(vin)) return true; // VIN corto al final del chasis largo
+      return false;
+    });
     return {
-      chasis: vin,
+      chasis_input: vin,           // lo que pegó el usuario (puede ser corto)
+      chasis: found ? found.chasis : vin, // chasis LARGO del sistema (el correcto para guardar)
       found: !!found,
       modelo: found ? found.modelo : '',
       modelo_desc: found ? found.modelo_desc : '',
       ubic_sistema: found ? found.ubic_sistema : '',
-      ubic_real: found ? defaultSucursal : '', // Solo asigna default a los encontrados
+      ubic_real: found ? defaultSucursal : '',
       currentStatus: found ? (found.status || 'pending') : null
     };
   });
@@ -1911,7 +2162,7 @@ function renderBulkList() {
         <div class="bulk-vin-icon ok">✓</div>
         <div class="bulk-vin-info">
           <div class="bulk-vin-chasis">${escapeHtml(it.chasis)}</div>
-          <div class="bulk-vin-modelo">${escapeHtml(it.modelo)}${it.modelo_desc ? ' — ' + escapeHtml(it.modelo_desc) : ''}</div>
+          <div class="bulk-vin-modelo">${escapeHtml(it.modelo)}${it.modelo_desc ? ' — ' + escapeHtml(it.modelo_desc) : ''}${it.chasis_input !== it.chasis ? `<span style="color:var(--text-dim); font-family:JetBrains Mono,monospace; font-size:10px; margin-left:6px;">(leído: ${escapeHtml(it.chasis_input)})</span>` : ''}</div>
         </div>
         <select class="bulk-vin-select ${!it.ubic_real ? 'unassigned' : ''}" data-idx="${i}">
           <option value="">— Sucursal —</option>
@@ -2016,30 +2267,166 @@ $('bulkModal').addEventListener('click', e => {
   if (e.target.id === 'bulkModal') closeBulkModal();
 });
 
+// ============ GESTIÓN DE USUARIOS ============
+
+async function openUsersModal() {
+  $('usersModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  await loadUsersList();
+}
+
+function closeUsersModal() {
+  $('usersModal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+async function loadUsersList() {
+  const list = $('usersList');
+  list.innerHTML = '<div class="empty-state" style="padding:30px 20px;">Cargando…</div>';
+  try {
+    const res = await api('listUsers', { adminPwd: CONFIG.adminPwd });
+    if (!res.users || res.users.length === 0) {
+      list.innerHTML = '<div class="empty-state" style="padding:30px 20px;">Todavía no hay auditores cargados. Creá el primero arriba.</div>';
+      return;
+    }
+    list.innerHTML = res.users.map(u => {
+      const ultimo = u.ultimo_acceso
+        ? new Date(u.ultimo_acceso).toLocaleString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
+        : 'nunca';
+      const creado = u.creado
+        ? new Date(u.creado).toLocaleDateString('es-AR')
+        : '—';
+      return `
+        <div class="user-row ${u.activo ? '' : 'inactive'}">
+          <div class="user-info">
+            <div class="user-name">${escapeHtml(u.nombre)} ${u.activo ? '' : '<span style="color:var(--red); font-size:10px; font-family:JetBrains Mono;">· INACTIVO</span>'}</div>
+            <div class="user-meta">Creado: ${creado} · Último acceso: ${ultimo}${u.creado_por ? ' · por ' + escapeHtml(u.creado_por) : ''}</div>
+          </div>
+          <div class="user-actions">
+            <button class="btn-mini" data-action="changepwd" data-name="${escapeHtml(u.nombre)}">Cambiar clave</button>
+            <button class="btn-mini ${u.activo ? '' : 'danger'}" data-action="toggle" data-name="${escapeHtml(u.nombre)}" data-active="${u.activo}">${u.activo ? 'Desactivar' : 'Activar'}</button>
+            <button class="btn-mini danger" data-action="delete" data-name="${escapeHtml(u.nombre)}">Eliminar</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    list.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', () => handleUserAction(btn.dataset.action, btn.dataset.name, btn.dataset.active === 'true'));
+    });
+  } catch (err) {
+    list.innerHTML = `<div class="empty-state" style="padding:30px 20px; color:var(--red);">Error: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+async function handleUserAction(action, nombre, currentActive) {
+  if (action === 'changepwd') {
+    const newPwd = prompt(`Nueva clave para ${nombre}:`);
+    if (!newPwd) return;
+    if (newPwd.length < 4) { alert('La clave debe tener al menos 4 caracteres.'); return; }
+    try {
+      await api('updateUserPwd', { adminPwd: CONFIG.adminPwd, nombre, userPwd: newPwd });
+      showToast(`✓ Clave actualizada para ${nombre}`);
+      await loadUsersList();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  } else if (action === 'toggle') {
+    const newActive = !currentActive;
+    if (!confirm(`${newActive ? 'Activar' : 'Desactivar'} a "${nombre}"?\n\n${newActive ? '' : 'No va a poder loguearse mientras esté desactivado.'}`)) return;
+    try {
+      await api('setUserActive', { adminPwd: CONFIG.adminPwd, nombre, activo: newActive });
+      showToast(`✓ ${nombre} ${newActive ? 'activado' : 'desactivado'}`);
+      await loadUsersList();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  } else if (action === 'delete') {
+    if (!confirm(`¿Eliminar a "${nombre}"?\n\nNo se puede deshacer. Sus auditorías previas quedan en el Sheet pero no podrá volver a loguearse.`)) return;
+    try {
+      await api('deleteUser', { adminPwd: CONFIG.adminPwd, nombre });
+      showToast(`✓ ${nombre} eliminado`);
+      await loadUsersList();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  }
+}
+
+async function createNewUser() {
+  const nombre = $('newUserName').value.trim();
+  const pwd = $('newUserPwd').value;
+  if (!nombre || !pwd) { alert('Completá nombre y clave.'); return; }
+  if (pwd.length < 4) { alert('La clave debe tener al menos 4 caracteres.'); return; }
+  $('btnCreateUser').disabled = true;
+  $('btnCreateUser').textContent = 'Creando…';
+  try {
+    await api('createUser', {
+      adminPwd: CONFIG.adminPwd,
+      nombre, userPwd: pwd,
+      adminName: CONFIG.userName
+    });
+    $('newUserName').value = '';
+    $('newUserPwd').value = '';
+    showToast(`✓ ${nombre} creado`);
+    await loadUsersList();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  } finally {
+    $('btnCreateUser').disabled = false;
+    $('btnCreateUser').textContent = '+ Crear';
+  }
+}
+
+// Listeners
+$('btnUsers').addEventListener('click', openUsersModal);
+$('btnCloseUsers').addEventListener('click', closeUsersModal);
+$('btnRefreshUsers').addEventListener('click', loadUsersList);
+$('btnCreateUser').addEventListener('click', createNewUser);
+$('usersModal').addEventListener('click', e => {
+  if (e.target.id === 'usersModal') closeUsersModal();
+});
+
+// Toggle de admin password en login
+$('lnkAdminMode').addEventListener('click', () => {
+  const field = $('adminPwdField');
+  const visible = field.style.display !== 'none';
+  field.style.display = visible ? 'none' : '';
+  $('lnkAdminMode').textContent = visible
+    ? 'Soy admin (cargar reporte / gestionar usuarios) ↓'
+    : 'Ocultar campo admin ↑';
+});
+
 // ============ INIT ============
 loadConfig();
 
 if (SHEET_API_URL) {
-  // URL hardcodeada: ocultar campo URL y link de ayuda
   $('urlField').style.display = 'none';
   $('lnkHelp').style.display = 'none';
   $('setupTitle').textContent = 'Identificate para empezar';
-  // Si ya hay nombre guardado, precargar
   if (CONFIG.userName) $('userName').value = CONFIG.userName;
-  if (CONFIG.adminPwd) $('adminPwd').value = CONFIG.adminPwd;
-  // Auto-conectar si tiene nombre guardado
-  if (CONFIG.userName) {
+  if (CONFIG.userPwd) $('userPwd').value = CONFIG.userPwd;
+  if (CONFIG.adminPwd) {
+    $('adminPwd').value = CONFIG.adminPwd;
+    $('adminPwdField').style.display = '';
+  }
+  if (CONFIG.userName && (CONFIG.userPwd || CONFIG.adminPwd)) {
     setTimeout(() => $('btnConnect').click(), 200);
   }
 } else {
-  // Modo dev: mostrar campo URL
   $('urlField').style.display = '';
   $('lnkHelp').style.display = '';
   if (CONFIG.apiUrl && CONFIG.userName) {
     $('apiUrl').value = CONFIG.apiUrl;
     $('userName').value = CONFIG.userName;
-    if (CONFIG.adminPwd) $('adminPwd').value = CONFIG.adminPwd;
-    setTimeout(() => $('btnConnect').click(), 200);
+    if (CONFIG.userPwd) $('userPwd').value = CONFIG.userPwd;
+    if (CONFIG.adminPwd) {
+      $('adminPwd').value = CONFIG.adminPwd;
+      $('adminPwdField').style.display = '';
+    }
+    if (CONFIG.userPwd || CONFIG.adminPwd) {
+      setTimeout(() => $('btnConnect').click(), 200);
+    }
   }
 }
 </script>
